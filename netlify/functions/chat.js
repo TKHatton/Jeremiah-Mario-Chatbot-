@@ -78,13 +78,3 @@ IMPORTANT:
   }
 };
 ```
-
-**STEP 3: Set up on Netlify**
-
-1. Create the folder structure locally:
-```
-   my-mario-chat/
-   ├── index.html
-   └── netlify/
-       └── functions/
-           └── chat.js
