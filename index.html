@@ -1,0 +1,385 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Coins } from 'lucide-react';
+
+const MarioChatGame = () => {
+  const [messages, setMessages] = useState([
+    { type: 'mario', text: "Wahoo! It's-a me, Mario! What's your name, friend?" }
+  ]);
+  const [input, setInput] = useState('');
+  const [coins, setCoins] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [marioJump, setMarioJump] = useState(false);
+  const [showCoinEffect, setShowCoinEffect] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const messagesEndRef = useRef(null);
+  const [userName, setUserName] = useState('');
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const playSound = (type) => {
+    if (!soundEnabled) return;
+    
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    if (type === 'coin') {
+      oscillator.frequency.setValueAtTime(987.77, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } else if (type === 'jump') {
+      oscillator.frequency.setValueAtTime(329.63, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(659.25, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.15);
+    } else if (type === 'powerup') {
+      const frequencies = [1047, 1175, 1319, 1397, 1568, 1760, 1976, 2093];
+      frequencies.forEach((freq, i) => {
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (i * 0.05));
+      });
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+  };
+
+  const getMarioResponse = (userMessage) => {
+    const lowerMessage = userMessage.toLowerCase();
+    const name = userName || 'friend';
+    
+    if (!userName) {
+      const extractedName = userMessage.trim().split(' ')[0];
+      setUserName(extractedName);
+      return `Fantastico! Nice to meet you, ${extractedName}! I'm on an adventure through the Mushroom Kingdom. What did you do today? Tell me about your day!`;
+    }
+    
+    if (lowerMessage.includes('school') || lowerMessage.includes('class')) {
+      return `Mamma mia! School is like collecting knowledge coins, ${name}! Did you learn anything super cool today? Maybe something about-a science or math?`;
+    }
+    
+    if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('video')) {
+      return `Wahoo! I love-a games too! What game did you play? Was it as fun as jumping on Goombas? Hehe!`;
+    }
+    
+    if (lowerMessage.includes('friend') || lowerMessage.includes('buddy')) {
+      return `That's-a wonderful! Friends are like power-ups - they make everything more fun! What do you and your friends like to do together?`;
+    }
+    
+    if (lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
+      return `Mmm! I love-a mushrooms and spaghetti! What's your favorite food, ${name}? Does it give you super jumping power like my mushrooms?`;
+    }
+    
+    if (lowerMessage.includes('homework') || lowerMessage.includes('work')) {
+      return `Okie dokie! Homework is like solving puzzle blocks in my world. You're doing great! What subject are you working on?`;
+    }
+    
+    if (lowerMessage.includes('tired') || lowerMessage.includes('sleepy')) {
+      return `Even heroes need rest, ${name}! I take breaks between my adventures. Did you have a busy day today?`;
+    }
+    
+    if (lowerMessage.includes('fun') || lowerMessage.includes('cool') || lowerMessage.includes('awesome')) {
+      return `Yahoo! That sounds super fun! You know what else is fun? Collecting coins and saving Princess Peach! What's the most fun thing you did this week?`;
+    }
+    
+    if (lowerMessage.includes('peach') || lowerMessage.includes('princess')) {
+      return `Princess Peach is-a always getting captured by Bowser! But I never give up - I always save her! Do you ever help people like I help the Princess?`;
+    }
+    
+    if (lowerMessage.includes('bowser') || lowerMessage.includes('bad') || lowerMessage.includes('villain')) {
+      return `Bowser is tough, but I'm-a tougher! With courage and my friends Luigi and Yoshi, we can beat any challenge! What challenges did you overcome today, ${name}?`;
+    }
+    
+    if (lowerMessage.includes('luigi') || lowerMessage.includes('brother')) {
+      return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave. Do you have brothers or sisters, ${name}?`;
+    }
+    
+    if (lowerMessage.includes('jump') || lowerMessage.includes('run')) {
+      return `Wahoo! Jumping is what I do best! *does a triple jump* Can you jump high too? What sports or activities do you like?`;
+    }
+
+    if (lowerMessage.includes('birthday') || lowerMessage.includes('party')) {
+      return `It's-a party time! Yahoo! Birthdays are the best - like collecting a Super Star! I hope you have lots of cake and fun! What's your favorite part of birthdays?`;
+    }
+
+    if (lowerMessage.includes('help') || lowerMessage.includes('stuck')) {
+      return `Don't worry, ${name}! Even when I'm stuck in a tough level, I keep trying! What do you need help with? Remember - you're braver than you think!`;
+    }
+    
+    if (lowerMessage.includes('how are you') || lowerMessage.includes('how are ya')) {
+      return `I'm-a doing great! Just finished jumping through some pipes and collecting coins! How are YOU doing today, ${name}?`;
+    }
+    
+    if (lowerMessage.includes('where') && lowerMessage.includes('you')) {
+      return `Right now I'm in the Mushroom Kingdom! There are pipes everywhere and lots of coins to collect. Where are you right now?`;
+    }
+    
+    if (lowerMessage.includes('favorite') && lowerMessage.includes('color')) {
+      return `I love-a RED! It's the color of my hat and overalls! What's your favorite color, ${name}?`;
+    }
+    
+    const defaultResponses = [
+      `That's-a interesting, ${name}! Tell me more! What else happened today?`,
+      `Mamma mia! You're doing great at typing! What's the coolest thing you saw today?`,
+      `Wahoo! I love hearing about your adventures, ${name}! What made you smile today?`,
+      `Let's-a go! Keep telling me about your day! Did anything surprise you?`,
+      `Yahoo! That sounds neat! What's something you're looking forward to, ${name}?`,
+      `Okie dokie! You know what? You remind me of a brave adventurer! What's your favorite thing to do?`,
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+  };
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+
+    const userMessage = { type: 'user', text: input };
+    setMessages(prev => [...prev, userMessage]);
+    
+    setCoins(prev => prev + 1);
+    setShowCoinEffect(true);
+    playSound('coin');
+    setTimeout(() => setShowCoinEffect(false), 1000);
+    
+    setMarioJump(true);
+    playSound('jump');
+    setTimeout(() => setMarioJump(false), 400);
+    
+    if (messages.length % 5 === 0) {
+      playSound('powerup');
+    }
+    
+    setInput('');
+    
+    setTimeout(() => {
+      const response = getMarioResponse(input);
+      setMessages(prev => [...prev, { type: 'mario', text: response }]);
+    }, 800 + Math.random() * 800);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-500 flex items-center justify-center p-4 relative overflow-hidden" style={{
+      background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 75%, #7c3f00 75%, #7c3f00 100%)'
+    }}>
+      {/* Pixel clouds */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white"
+            style={{
+              width: '64px',
+              height: '32px',
+              top: `${20 + i * 80}px`,
+              left: `${10 + i * 150}px`,
+              clipPath: 'polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)',
+              opacity: 0.9
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Coin effect */}
+      {showCoinEffect && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <div className="text-6xl font-bold text-yellow-300" style={{
+            textShadow: '3px 3px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
+          }}>
+            +1
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-5xl bg-black rounded-lg overflow-hidden border-4 border-gray-800 shadow-2xl">
+        {/* Mario Bros HUD Style Header */}
+        <div className="bg-black p-4 border-b-4 border-gray-800">
+          <div className="flex justify-between items-center font-mono text-white">
+            <div className="flex items-center gap-8">
+              <div>
+                <div className="text-sm">MARIO</div>
+                <div className="text-2xl font-bold flex items-center gap-2">
+                  <span className="text-yellow-300">×{coins.toString().padStart(2, '0')}</span>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {[...Array(lives)].map((_, i) => (
+                  <div key={i} className="text-2xl">❤️</div>
+                ))}
+              </div>
+            </div>
+            <div className="text-3xl font-bold" style={{
+              textShadow: '2px 2px 0px #000'
+            }}>WORLD 1-1</div>
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold text-xl"
+            >
+              {soundEnabled ? '♪' : '🔇'}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex h-[600px]">
+          {/* Game World Side - Mario Character */}
+          <div className="w-2/5 relative overflow-hidden" style={{
+            background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 70%, #7c3f00 70%, #7c3f00 100%)'
+          }}>
+            {/* Ground blocks */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 flex">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-16 h-16 border-2 border-black"
+                  style={{
+                    background: '#d2691e',
+                    boxShadow: 'inset 2px 2px 0px #cd853f, inset -2px -2px 0px #8b4513'
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Question blocks */}
+            <div className="absolute top-32 left-20">
+              <div
+                className="w-12 h-12 border-2 border-black flex items-center justify-center text-2xl font-bold"
+                style={{
+                  background: '#f4a460',
+                  boxShadow: 'inset 2px 2px 0px #ffcc99, inset -2px -2px 0px #8b4513'
+                }}
+              >
+                ?
+              </div>
+            </div>
+
+            {/* Pipe */}
+            <div className="absolute bottom-16 left-32">
+              <div className="w-16 h-24 border-4 border-black" style={{ background: '#2e8b57' }}>
+                <div className="w-full h-4 bg-gray-800 border-b-2 border-black"></div>
+              </div>
+            </div>
+
+            {/* Mario Character - Pixel Art Style */}
+            <div className={`absolute transition-all duration-300 ${
+              marioJump ? 'bottom-32' : 'bottom-16'
+            } left-1/2 transform -translate-x-1/2`}>
+              <svg width="48" height="64" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
+                {/* Mario's iconic sprite representation */}
+                {/* Hat */}
+                <rect x="5" y="0" width="6" height="2" fill="#ff0000"/>
+                <rect x="4" y="2" width="8" height="2" fill="#ff0000"/>
+                {/* Face/Skin */}
+                <rect x="4" y="4" width="8" height="2" fill="#ffdbac"/>
+                <rect x="3" y="6" width="10" height="2" fill="#ffdbac"/>
+                {/* Eyes */}
+                <rect x="5" y="5" width="1" height="1" fill="#000000"/>
+                <rect x="10" y="5" width="1" height="1" fill="#000000"/>
+                {/* Mustache */}
+                <rect x="5" y="7" width="6" height="1" fill="#000000"/>
+                {/* Shirt */}
+                <rect x="5" y="8" width="6" height="2" fill="#ff0000"/>
+                <rect x="4" y="10" width="8" height="2" fill="#ff0000"/>
+                {/* Overalls */}
+                <rect x="4" y="12" width="3" height="2" fill="#0000ff"/>
+                <rect x="9" y="12" width="3" height="2" fill="#0000ff"/>
+                {/* Legs */}
+                <rect x="4" y="14" width="2" height="2" fill="#ffdbac"/>
+                <rect x="10" y="14" width="2" height="2" fill="#ffdbac"/>
+              </svg>
+            </div>
+
+            {/* Coin sprites floating */}
+            {showCoinEffect && (
+              <div className="absolute top-24 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <div className="w-8 h-8 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center font-bold">
+                  C
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Chat Interface */}
+          <div className="flex-1 flex flex-col bg-black">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: '#1a1a1a' }}>
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-md px-4 py-3 font-mono text-sm border-2 ${
+                      msg.type === 'user'
+                        ? 'bg-blue-600 text-white border-blue-800'
+                        : 'bg-red-600 text-white border-red-800'
+                    }`}
+                    style={{
+                      clipPath: 'polygon(0% 0%, 95% 0%, 100% 5%, 100% 100%, 5% 100%, 0% 95%)'
+                    }}
+                  >
+                    {msg.type === 'mario' && (
+                      <div className="font-bold mb-1 text-yellow-300">★ MARIO:</div>
+                    )}
+                    <p className="leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input - Mario Pipe Style */}
+            <div className="p-4 bg-gray-900 border-t-4 border-gray-700">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="TYPE YOUR MESSAGE..."
+                  className="flex-1 px-4 py-3 bg-gray-800 text-white font-mono border-2 border-gray-600 focus:outline-none focus:border-yellow-400"
+                  style={{
+                    clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)'
+                  }}
+                />
+                <button
+                  onClick={handleSend}
+                  className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 font-bold font-mono border-2 border-green-800 transition-all transform hover:scale-105"
+                  style={{
+                    clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)',
+                    textShadow: '2px 2px 0px #000'
+                  }}
+                >
+                  GO!
+                </button>
+              </div>
+              <p className="text-center mt-2 text-green-400 font-mono text-xs">
+                ► PRESS ENTER TO SEND ◄
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MarioChatGame;
