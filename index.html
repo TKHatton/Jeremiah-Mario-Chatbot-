@@ -1,463 +1,446 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Coins } from 'lucide-react';
-
-const MarioChatGame = () => {
-  const [messages, setMessages] = useState([
-    { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
-  ]);
-  const [input, setInput] = useState('');
-  const [coins, setCoins] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [marioJump, setMarioJump] = useState(false);
-  const [showCoinEffect, setShowCoinEffect] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const messagesEndRef = useRef(null);
-  const [conversationCount, setConversationCount] = useState(0);
-
-  // Jeremiah's personal info
-  const playerInfo = {
-    name: 'Jeremiah',
-    grade: '3rd',
-    favoriteColor: 'red',
-    sports: ['baseball', 'soccer', 'basketball'],
-    baseballPosition: ['pitch hitter', 'outfielder'],
-    hobbies: ['origami', 'legos', 'reading', 'drawing'],
-    favoriteGames: ['Super Mario Galaxy', 'Super Mario Party'],
-    favoriteFood: 'pizza',
-    siblings: ['brother', 'sister'],
-    favoriteSubject: 'art',
-    favoriteCharacter: 'Yoshi'
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const playSound = (type) => {
-    if (!soundEnabled) return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mario Chat Adventure - Jeremiah</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
     
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'coin') {
-      oscillator.frequency.setValueAtTime(987.77, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.1);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.2);
-    } else if (type === 'jump') {
-      oscillator.frequency.setValueAtTime(329.63, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(659.25, audioContext.currentTime + 0.1);
-      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.15);
-    } else if (type === 'powerup') {
-      const frequencies = [1047, 1175, 1319, 1397, 1568, 1760, 1976, 2093];
-      frequencies.forEach((freq, i) => {
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (i * 0.05));
-      });
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    }
-  };
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-  const getMarioResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Baseball responses
-    if (lowerMessage.includes('baseball') || lowerMessage.includes('practice') || lowerMessage.includes('game')) {
-      const responses = [
-        `Wahoo! Baseball! I love watching you play, Jeremiah! Did you do any pitching today? Or catch some fly balls in the outfield?`,
-        `That's-a awesome! Baseball is like my adventures - you gotta be quick and ready! How's your hitting going? Hitting home runs like collecting coins!`,
-        `Mamma mia! I bet you're getting really good at baseball! Do you like pitching better or playing outfield better?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+        const MarioChatGame = () => {
+          const [messages, setMessages] = useState([
+            { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
+          ]);
+          const [input, setInput] = useState('');
+          const [coins, setCoins] = useState(0);
+          const [lives, setLives] = useState(3);
+          const [marioJump, setMarioJump] = useState(false);
+          const [showCoinEffect, setShowCoinEffect] = useState(false);
+          const [soundEnabled, setSoundEnabled] = useState(true);
+          const messagesEndRef = useRef(null);
+          const [conversationCount, setConversationCount] = useState(0);
 
-    // Soccer/Basketball
-    if (lowerMessage.includes('soccer') || lowerMessage.includes('basketball')) {
-      const responses = [
-        `Yahoo! Sports are the best! Just like how I jump and run through levels! Did you score any goals or make any baskets?`,
-        `That's-a fantastic! Soccer and basketball are super fun! Which one do you like playing more, Jeremiah?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+          const playerInfo = {
+            name: 'Jeremiah',
+            grade: '3rd',
+            favoriteColor: 'red',
+            sports: ['baseball', 'soccer', 'basketball'],
+            baseballPosition: ['pitch hitter', 'outfielder'],
+            hobbies: ['origami', 'legos', 'reading', 'drawing'],
+            favoriteGames: ['Super Mario Galaxy', 'Super Mario Party'],
+            favoriteFood: 'pizza',
+            siblings: ['brother', 'sister'],
+            favoriteSubject: 'art',
+            favoriteCharacter: 'Yoshi'
+          };
 
-    // Drawing/Art
-    if (lowerMessage.includes('draw') || lowerMessage.includes('art') || lowerMessage.includes('picture')) {
-      const responses = [
-        `Ooh! I love your drawings, Jeremiah! What did you draw today? Maybe you can draw me and Yoshi sometime!`,
-        `Art class! That's your favorite subject, right? You're so good at drawing! What are you working on?`,
-        `Mamma mia! You're such a talented artist! Are you drawing anything cool? Maybe a Super Mario adventure scene?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+          const scrollToBottom = () => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          };
 
-    // Origami
-    if (lowerMessage.includes('origami') || lowerMessage.includes('paper') || lowerMessage.includes('fold')) {
-      const responses = [
-        `Wahoo! Origami is so cool! What did you make? Can you make a Yoshi or a star? That would be amazing!`,
-        `That's-a so neat! Folding paper is like solving puzzles in my world! What's your favorite thing to make with origami?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+          useEffect(() => {
+            scrollToBottom();
+          }, [messages]);
 
-    // Legos
-    if (lowerMessage.includes('lego') || lowerMessage.includes('build') || lowerMessage.includes('built')) {
-      const responses = [
-        `Let's-a go! Building with Legos is like constructing levels in my world! What did you build, Jeremiah?`,
-        `Mamma mia! I bet you make awesome Lego creations! Are you building anything special right now?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+          const playSound = (type) => {
+            if (!soundEnabled) return;
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (type === 'coin') {
+              oscillator.frequency.setValueAtTime(987.77, audioContext.currentTime);
+              oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.1);
+              gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.2);
+            } else if (type === 'jump') {
+              oscillator.frequency.setValueAtTime(329.63, audioContext.currentTime);
+              oscillator.frequency.exponentialRampToValueAtTime(659.25, audioContext.currentTime + 0.1);
+              gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.15);
+            } else if (type === 'powerup') {
+              const frequencies = [1047, 1175, 1319, 1397, 1568, 1760, 1976, 2093];
+              frequencies.forEach((freq, i) => {
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (i * 0.05));
+              });
+              gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.5);
+            }
+          };
 
-    // Reading
-    if (lowerMessage.includes('read') || lowerMessage.includes('book') || lowerMessage.includes('story')) {
-      const responses = [
-        `Okie dokie! Reading is like going on adventures without leaving home! What book are you reading, Jeremiah?`,
-        `That's-a wonderful! Books are full of adventures, just like the Mushroom Kingdom! What's your book about?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+          const getMarioResponse = (userMessage) => {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            if (lowerMessage.includes('baseball') || lowerMessage.includes('practice') || lowerMessage.includes('game')) {
+              const responses = [
+                `Wahoo! Baseball! I love watching you play, Jeremiah! Did you do any pitching today? Or catch some fly balls in the outfield?`,
+                `That's-a awesome! Baseball is like my adventures - you gotta be quick and ready! How's your hitting going? Hitting home runs like collecting coins!`,
+                `Mamma mia! I bet you're getting really good at baseball! Do you like pitching better or playing outfield better?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Video games
-    if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('galaxy') || lowerMessage.includes('party')) {
-      const responses = [
-        `Wahoo! Super Mario Galaxy is one of my best adventures! Do you like flying through space with me? Which galaxy is your favorite?`,
-        `Yahoo! Super Mario Party is so much fun! Do you play with your brother and sister? Who usually wins the mini-games?`,
-        `Let's-a go! I love that you play my games, Jeremiah! Are you playing Galaxy or Party today? Both are super fun!`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('soccer') || lowerMessage.includes('basketball')) {
+              const responses = [
+                `Yahoo! Sports are the best! Just like how I jump and run through levels! Did you score any goals or make any baskets?`,
+                `That's-a fantastic! Soccer and basketball are super fun! Which one do you like playing more, Jeremiah?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Yoshi
-    if (lowerMessage.includes('yoshi')) {
-      const responses = [
-        `Yoshi! He's-a the best! I love riding on Yoshi's back - he's such a good friend! Do you like the green Yoshi or other colors?`,
-        `Mamma mia! Yoshi is your favorite character! He's my best buddy too! He can eat almost anything and flutter jump! So cool!`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('draw') || lowerMessage.includes('art') || lowerMessage.includes('picture')) {
+              const responses = [
+                `Ooh! I love your drawings, Jeremiah! What did you draw today? Maybe you can draw me and Yoshi sometime!`,
+                `Art class! That's your favorite subject, right? You're so good at drawing! What are you working on?`,
+                `Mamma mia! You're such a talented artist! Are you drawing anything cool? Maybe a Super Mario adventure scene?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Pizza
-    if (lowerMessage.includes('pizza') || lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
-      const responses = [
-        `Mmm! Pizza! That's your favorite, right? I love pizza too, Jeremiah! What kind of pizza do you like? Pepperoni? Cheese?`,
-        `Yahoo! Did you have pizza today? Pizza gives you energy just like my Super Mushrooms give me power!`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('origami') || lowerMessage.includes('paper') || lowerMessage.includes('fold')) {
+              const responses = [
+                `Wahoo! Origami is so cool! What did you make? Can you make a Yoshi or a star? That would be amazing!`,
+                `That's-a so neat! Folding paper is like solving puzzles in my world! What's your favorite thing to make with origami?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // School
-    if (lowerMessage.includes('school') || lowerMessage.includes('class') || lowerMessage.includes('3rd grade')) {
-      const responses = [
-        `How's 3rd grade going, Jeremiah? Did you have art class today? I know that's your favorite!`,
-        `Mamma mia! School is like collecting knowledge coins! What's the coolest thing you learned today in 3rd grade?`,
-        `That's-a great! 3rd grade is fun! Did you do anything cool in art class or your other subjects today?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('lego') || lowerMessage.includes('build') || lowerMessage.includes('built')) {
+              const responses = [
+                `Let's-a go! Building with Legos is like constructing levels in my world! What did you build, Jeremiah?`,
+                `Mamma mia! I bet you make awesome Lego creations! Are you building anything special right now?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Siblings
-    if (lowerMessage.includes('brother') || lowerMessage.includes('sister') || lowerMessage.includes('sibling')) {
-      const responses = [
-        `Ooh! Your brother and sister! What did you do with them today? Did you play games together?`,
-        `That's-a nice! Having a brother and sister is like having teammates! I have Luigi - he's my brother. What do you like doing with your brother and sister?`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('read') || lowerMessage.includes('book') || lowerMessage.includes('story')) {
+              const responses = [
+                `Okie dokie! Reading is like going on adventures without leaving home! What book are you reading, Jeremiah?`,
+                `That's-a wonderful! Books are full of adventures, just like the Mushroom Kingdom! What's your book about?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Red color
-    if (lowerMessage.includes('red') || lowerMessage.includes('color')) {
-      const responses = [
-        `Red! That's-a my favorite color too, Jeremiah! My hat and shirt are red! We have great taste!`,
-        `Wahoo! Red is the best color! It's the color of fire flowers and my awesome outfit!`,
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
+            if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('galaxy') || lowerMessage.includes('party')) {
+              const responses = [
+                `Wahoo! Super Mario Galaxy is one of my best adventures! Do you like flying through space with me? Which galaxy is your favorite?`,
+                `Yahoo! Super Mario Party is so much fun! Do you play with your brother and sister? Who usually wins the mini-games?`,
+                `Let's-a go! I love that you play my games, Jeremiah! Are you playing Galaxy or Party today? Both are super fun!`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Generic Mario responses
-    if (lowerMessage.includes('peach') || lowerMessage.includes('princess')) {
-      return `Princess Peach is always getting captured by Bowser! But I never give up - I always save her! Are you brave like me, Jeremiah?`;
-    }
-    
-    if (lowerMessage.includes('bowser')) {
-      return `Bowser is tough, but I'm-a tougher! With courage and my friends like Yoshi, we can beat any challenge! What challenges did you overcome today?`;
-    }
-    
-    if (lowerMessage.includes('luigi')) {
-      return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave - kind of like having a brother, right?`;
-    }
+            if (lowerMessage.includes('yoshi')) {
+              const responses = [
+                `Yoshi! He's-a the best! I love riding on Yoshi's back - he's such a good friend! Do you like the green Yoshi or other colors?`,
+                `Mamma mia! Yoshi is your favorite character! He's my best buddy too! He can eat almost anything and flutter jump! So cool!`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    if (lowerMessage.includes('how are you') || lowerMessage.includes('how are ya')) {
-      return `I'm-a doing great, Jeremiah! Just finished jumping through some pipes and collecting coins! How are YOU doing today?`;
-    }
+            if (lowerMessage.includes('pizza') || lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
+              const responses = [
+                `Mmm! Pizza! That's your favorite, right? I love pizza too, Jeremiah! What kind of pizza do you like? Pepperoni? Cheese?`,
+                `Yahoo! Did you have pizza today? Pizza gives you energy just like my Super Mushrooms give me power!`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    // Engaging follow-up questions based on his interests
-    const personalQuestions = [
-      `Tell me more, Jeremiah! What else happened today?`,
-      `That's-a interesting! Did you do any drawing or origami today?`,
-      `Wahoo! Did you play any baseball, soccer, or basketball this week?`,
-      `Okie dokie! What did you do with your brother and sister recently?`,
-      `Yahoo! Are you reading any good books right now?`,
-      `Let's-a go! Did you build anything cool with Legos lately?`,
-      `Mamma mia! That sounds neat! What's making you happy today, Jeremiah?`,
-      `That's-a cool! Did you have art class today? I know you love art!`,
-      `Nice! Have you been playing any Super Mario games? Galaxy or Party?`,
-      `Awesome! Did you have any pizza this week? That's your favorite!`,
-    ];
-    
-    return personalQuestions[Math.floor(Math.random() * personalQuestions.length)];
-  };
+            if (lowerMessage.includes('school') || lowerMessage.includes('class') || lowerMessage.includes('3rd grade')) {
+              const responses = [
+                `How's 3rd grade going, Jeremiah? Did you have art class today? I know that's your favorite!`,
+                `Mamma mia! School is like collecting knowledge coins! What's the coolest thing you learned today in 3rd grade?`,
+                `That's-a great! 3rd grade is fun! Did you do anything cool in art class or your other subjects today?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+            if (lowerMessage.includes('brother') || lowerMessage.includes('sister') || lowerMessage.includes('sibling')) {
+              const responses = [
+                `Ooh! Your brother and sister! What did you do with them today? Did you play games together?`,
+                `That's-a nice! Having a brother and sister is like having teammates! I have Luigi - he's my brother. What do you like doing with your brother and sister?`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-    const userMessage = { type: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
-    setConversationCount(prev => prev + 1);
-    
-    setCoins(prev => prev + 1);
-    setShowCoinEffect(true);
-    playSound('coin');
-    setTimeout(() => setShowCoinEffect(false), 1000);
-    
-    setMarioJump(true);
-    playSound('jump');
-    setTimeout(() => setMarioJump(false), 400);
-    
-    if (conversationCount > 0 && conversationCount % 5 === 0) {
-      playSound('powerup');
-    }
-    
-    setInput('');
-    
-    setTimeout(() => {
-      const response = getMarioResponse(input);
-      setMessages(prev => [...prev, { type: 'mario', text: response }]);
-    }, 800 + Math.random() * 800);
-  };
+            if (lowerMessage.includes('red') || lowerMessage.includes('color')) {
+              const responses = [
+                `Red! That's-a my favorite color too, Jeremiah! My hat and shirt are red! We have great taste!`,
+                `Wahoo! Red is the best color! It's the color of fire flowers and my awesome outfit!`,
+              ];
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSend();
-    }
-  };
+            if (lowerMessage.includes('peach') || lowerMessage.includes('princess')) {
+              return `Princess Peach is always getting captured by Bowser! But I never give up - I always save her! Are you brave like me, Jeremiah?`;
+            }
+            
+            if (lowerMessage.includes('bowser')) {
+              return `Bowser is tough, but I'm-a tougher! With courage and my friends like Yoshi, we can beat any challenge! What challenges did you overcome today?`;
+            }
+            
+            if (lowerMessage.includes('luigi')) {
+              return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave - kind of like having a brother, right?`;
+            }
 
-  return (
-    <div className="min-h-screen bg-blue-500 flex items-center justify-center p-4 relative overflow-hidden" style={{
-      background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 75%, #7c3f00 75%, #7c3f00 100%)'
-    }}>
-      {/* Pixel clouds */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute bg-white"
-            style={{
-              width: '64px',
-              height: '32px',
-              top: `${20 + i * 80}px`,
-              left: `${10 + i * 150}px`,
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)',
-              opacity: 0.9
-            }}
-          />
-        ))}
-      </div>
+            if (lowerMessage.includes('how are you') || lowerMessage.includes('how are ya')) {
+              return `I'm-a doing great, Jeremiah! Just finished jumping through some pipes and collecting coins! How are YOU doing today?`;
+            }
 
-      {/* Coin effect */}
-      {showCoinEffect && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-          <div className="text-6xl font-bold text-yellow-300" style={{
-            textShadow: '3px 3px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
-          }}>
-            +1
-          </div>
-        </div>
-      )}
+            const personalQuestions = [
+              `Tell me more, Jeremiah! What else happened today?`,
+              `That's-a interesting! Did you do any drawing or origami today?`,
+              `Wahoo! Did you play any baseball, soccer, or basketball this week?`,
+              `Okie dokie! What did you do with your brother and sister recently?`,
+              `Yahoo! Are you reading any good books right now?`,
+              `Let's-a go! Did you build anything cool with Legos lately?`,
+              `Mamma mia! That sounds neat! What's making you happy today, Jeremiah?`,
+              `That's-a cool! Did you have art class today? I know you love art!`,
+              `Nice! Have you been playing any Super Mario games? Galaxy or Party?`,
+              `Awesome! Did you have any pizza this week? That's your favorite!`,
+            ];
+            
+            return personalQuestions[Math.floor(Math.random() * personalQuestions.length)];
+          };
 
-      <div className="w-full max-w-5xl bg-black rounded-lg overflow-hidden border-4 border-gray-800 shadow-2xl">
-        {/* Mario Bros HUD Style Header */}
-        <div className="bg-black p-4 border-b-4 border-gray-800">
-          <div className="flex justify-between items-center font-mono text-white">
-            <div className="flex items-center gap-8">
-              <div>
-                <div className="text-sm">JEREMIAH</div>
-                <div className="text-2xl font-bold flex items-center gap-2">
-                  <span className="text-yellow-300">×{coins.toString().padStart(2, '0')}</span>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                {[...Array(lives)].map((_, i) => (
-                  <div key={i} className="text-2xl">❤️</div>
+          const handleSend = () => {
+            if (!input.trim()) return;
+
+            const userMessage = { type: 'user', text: input };
+            setMessages(prev => [...prev, userMessage]);
+            setConversationCount(prev => prev + 1);
+            
+            setCoins(prev => prev + 1);
+            setShowCoinEffect(true);
+            playSound('coin');
+            setTimeout(() => setShowCoinEffect(false), 1000);
+            
+            setMarioJump(true);
+            playSound('jump');
+            setTimeout(() => setMarioJump(false), 400);
+            
+            if (conversationCount > 0 && conversationCount % 5 === 0) {
+              playSound('powerup');
+            }
+            
+            setInput('');
+            
+            setTimeout(() => {
+              const response = getMarioResponse(input);
+              setMessages(prev => [...prev, { type: 'mario', text: response }]);
+            }, 800 + Math.random() * 800);
+          };
+
+          const handleKeyPress = (e) => {
+            if (e.key === 'Enter') {
+              handleSend();
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-blue-500 flex items-center justify-center p-4 relative overflow-hidden" style={{
+              background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 75%, #7c3f00 75%, #7c3f00 100%)'
+            }}>
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute bg-white"
+                    style={{
+                      width: '64px',
+                      height: '32px',
+                      top: `${20 + i * 80}px`,
+                      left: `${10 + i * 150}px`,
+                      clipPath: 'polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)',
+                      opacity: 0.9
+                    }}
+                  />
                 ))}
               </div>
-            </div>
-            <div className="text-3xl font-bold" style={{
-              textShadow: '2px 2px 0px #000'
-            }}>WORLD 1-1</div>
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold text-xl"
-            >
-              {soundEnabled ? '♪' : '🔇'}
-            </button>
-          </div>
-        </div>
 
-        <div className="flex h-[600px]">
-          {/* Game World Side - Mario Character */}
-          <div className="w-2/5 relative overflow-hidden" style={{
-            background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 70%, #7c3f00 70%, #7c3f00 100%)'
-          }}>
-            {/* Ground blocks */}
-            <div className="absolute bottom-0 left-0 right-0 h-16 flex">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-16 h-16 border-2 border-black"
-                  style={{
-                    background: '#d2691e',
-                    boxShadow: 'inset 2px 2px 0px #cd853f, inset -2px -2px 0px #8b4513'
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Question blocks */}
-            <div className="absolute top-32 left-20">
-              <div
-                className="w-12 h-12 border-2 border-black flex items-center justify-center text-2xl font-bold"
-                style={{
-                  background: '#f4a460',
-                  boxShadow: 'inset 2px 2px 0px #ffcc99, inset -2px -2px 0px #8b4513'
-                }}
-              >
-                ?
-              </div>
-            </div>
-
-            {/* Pipe */}
-            <div className="absolute bottom-16 left-32">
-              <div className="w-16 h-24 border-4 border-black" style={{ background: '#2e8b57' }}>
-                <div className="w-full h-4 bg-gray-800 border-b-2 border-black"></div>
-              </div>
-            </div>
-
-            {/* Mario Character - Pixel Art Style */}
-            <div className={`absolute transition-all duration-300 ${
-              marioJump ? 'bottom-32' : 'bottom-16'
-            } left-1/2 transform -translate-x-1/2`}>
-              <svg width="48" height="64" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
-                {/* Hat */}
-                <rect x="5" y="0" width="6" height="2" fill="#ff0000"/>
-                <rect x="4" y="2" width="8" height="2" fill="#ff0000"/>
-                {/* Face/Skin */}
-                <rect x="4" y="4" width="8" height="2" fill="#ffdbac"/>
-                <rect x="3" y="6" width="10" height="2" fill="#ffdbac"/>
-                {/* Eyes */}
-                <rect x="5" y="5" width="1" height="1" fill="#000000"/>
-                <rect x="10" y="5" width="1" height="1" fill="#000000"/>
-                {/* Mustache */}
-                <rect x="5" y="7" width="6" height="1" fill="#000000"/>
-                {/* Shirt */}
-                <rect x="5" y="8" width="6" height="2" fill="#ff0000"/>
-                <rect x="4" y="10" width="8" height="2" fill="#ff0000"/>
-                {/* Overalls */}
-                <rect x="4" y="12" width="3" height="2" fill="#0000ff"/>
-                <rect x="9" y="12" width="3" height="2" fill="#0000ff"/>
-                {/* Legs */}
-                <rect x="4" y="14" width="2" height="2" fill="#ffdbac"/>
-                <rect x="10" y="14" width="2" height="2" fill="#ffdbac"/>
-              </svg>
-            </div>
-
-            {/* Coin sprites floating */}
-            {showCoinEffect && (
-              <div className="absolute top-24 left-1/2 transform -translate-x-1/2 animate-bounce">
-                <div className="w-8 h-8 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center font-bold">
-                  C
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Chat Interface */}
-          <div className="flex-1 flex flex-col bg-black">
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: '#1a1a1a' }}>
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-md px-4 py-3 font-mono text-sm border-2 ${
-                      msg.type === 'user'
-                        ? 'bg-blue-600 text-white border-blue-800'
-                        : 'bg-red-600 text-white border-red-800'
-                    }`}
-                    style={{
-                      clipPath: 'polygon(0% 0%, 95% 0%, 100% 5%, 100% 100%, 5% 100%, 0% 95%)'
-                    }}
-                  >
-                    {msg.type === 'mario' && (
-                      <div className="font-bold mb-1 text-yellow-300">★ MARIO:</div>
-                    )}
-                    <p className="leading-relaxed">{msg.text}</p>
+              {showCoinEffect && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+                  <div className="text-6xl font-bold text-yellow-300" style={{
+                    textShadow: '3px 3px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
+                  }}>
+                    +1
                   </div>
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+              )}
 
-            {/* Input - Mario Pipe Style */}
-            <div className="p-4 bg-gray-900 border-t-4 border-gray-700">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="TYPE YOUR MESSAGE..."
-                  className="flex-1 px-4 py-3 bg-gray-800 text-white font-mono border-2 border-gray-600 focus:outline-none focus:border-yellow-400"
-                  style={{
-                    clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)'
-                  }}
-                />
-                <button
-                  onClick={handleSend}
-                  className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 font-bold font-mono border-2 border-green-800 transition-all transform hover:scale-105"
-                  style={{
-                    clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)',
-                    textShadow: '2px 2px 0px #000'
-                  }}
-                >
-                  GO!
-                </button>
+              <div className="w-full max-w-5xl bg-black rounded-lg overflow-hidden border-4 border-gray-800 shadow-2xl">
+                <div className="bg-black p-4 border-b-4 border-gray-800">
+                  <div className="flex justify-between items-center font-mono text-white">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <div className="text-sm">JEREMIAH</div>
+                        <div className="text-2xl font-bold flex items-center gap-2">
+                          <span className="text-yellow-300">×{coins.toString().padStart(2, '0')}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        {[...Array(lives)].map((_, i) => (
+                          <div key={i} className="text-2xl">❤️</div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold" style={{
+                      textShadow: '2px 2px 0px #000'
+                    }}>WORLD 1-1</div>
+                    <button
+                      onClick={() => setSoundEnabled(!soundEnabled)}
+                      className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold text-xl"
+                    >
+                      {soundEnabled ? '♪' : '🔇'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex h-[600px]">
+                  <div className="w-2/5 relative overflow-hidden" style={{
+                    background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 70%, #7c3f00 70%, #7c3f00 100%)'
+                  }}>
+                    <div className="absolute bottom-0 left-0 right-0 h-16 flex">
+                      {[...Array(8)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-16 h-16 border-2 border-black"
+                          style={{
+                            background: '#d2691e',
+                            boxShadow: 'inset 2px 2px 0px #cd853f, inset -2px -2px 0px #8b4513'
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="absolute top-32 left-20">
+                      <div
+                        className="w-12 h-12 border-2 border-black flex items-center justify-center text-2xl font-bold"
+                        style={{
+                          background: '#f4a460',
+                          boxShadow: 'inset 2px 2px 0px #ffcc99, inset -2px -2px 0px #8b4513'
+                        }}
+                      >
+                        ?
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-16 left-32">
+                      <div className="w-16 h-24 border-4 border-black" style={{ background: '#2e8b57' }}>
+                        <div className="w-full h-4 bg-gray-800 border-b-2 border-black"></div>
+                      </div>
+                    </div>
+
+                    <div className={`absolute transition-all duration-300 ${
+                      marioJump ? 'bottom-32' : 'bottom-16'
+                    } left-1/2 transform -translate-x-1/2`}>
+                      <svg width="48" height="64" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
+                        <rect x="5" y="0" width="6" height="2" fill="#ff0000"/>
+                        <rect x="4" y="2" width="8" height="2" fill="#ff0000"/>
+                        <rect x="4" y="4" width="8" height="2" fill="#ffdbac"/>
+                        <rect x="3" y="6" width="10" height="2" fill="#ffdbac"/>
+                        <rect x="5" y="5" width="1" height="1" fill="#000000"/>
+                        <rect x="10" y="5" width="1" height="1" fill="#000000"/>
+                        <rect x="5" y="7" width="6" height="1" fill="#000000"/>
+                        <rect x="5" y="8" width="6" height="2" fill="#ff0000"/>
+                        <rect x="4" y="10" width="8" height="2" fill="#ff0000"/>
+                        <rect x="4" y="12" width="3" height="2" fill="#0000ff"/>
+                        <rect x="9" y="12" width="3" height="2" fill="#0000ff"/>
+                        <rect x="4" y="14" width="2" height="2" fill="#ffdbac"/>
+                        <rect x="10" y="14" width="2" height="2" fill="#ffdbac"/>
+                      </svg>
+                    </div>
+
+                    {showCoinEffect && (
+                      <div className="absolute top-24 left-1/2 transform -translate-x-1/2 animate-bounce">
+                        <div className="w-8 h-8 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center font-bold">
+                          C
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 flex flex-col bg-black">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: '#1a1a1a' }}>
+                      {messages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-md px-4 py-3 font-mono text-sm border-2 ${
+                              msg.type === 'user'
+                                ? 'bg-blue-600 text-white border-blue-800'
+                                : 'bg-red-600 text-white border-red-800'
+                            }`}
+                            style={{
+                              clipPath: 'polygon(0% 0%, 95% 0%, 100% 5%, 100% 100%, 5% 100%, 0% 95%)'
+                            }}
+                          >
+                            {msg.type === 'mario' && (
+                              <div className="font-bold mb-1 text-yellow-300">★ MARIO:</div>
+                            )}
+                            <p className="leading-relaxed">{msg.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="p-4 bg-gray-900 border-t-4 border-gray-700">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="TYPE YOUR MESSAGE..."
+                          className="flex-1 px-4 py-3 bg-gray-800 text-white font-mono border-2 border-gray-600 focus:outline-none focus:border-yellow-400"
+                          style={{
+                            clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)'
+                          }}
+                        />
+                        <button
+                          onClick={handleSend}
+                          className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 font-bold font-mono border-2 border-green-800 transition-all transform hover:scale-105"
+                          style={{
+                            clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)',
+                            textShadow: '2px 2px 0px #000'
+                          }}
+                        >
+                          GO!
+                        </button>
+                      </div>
+                      <p className="text-center mt-2 text-green-400 font-mono text-xs">
+                        ► PRESS ENTER TO SEND ◄
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-center mt-2 text-green-400 font-mono text-xs">
-                ► PRESS ENTER TO SEND ◄
-              </p>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+          );
+        };
 
-export default MarioChatGame;
+        ReactDOM.render(<MarioChatGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
