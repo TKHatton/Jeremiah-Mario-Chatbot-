@@ -15,6 +15,10 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // CONFIGURATION - Add your API key here OR use Netlify environment variable
+        const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY_HERE'; // Replace with your actual key
+        const USE_AI = OPENAI_API_KEY && OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE';
+
         const MarioChatGame = () => {
           const [messages, setMessages] = useState([
             { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
@@ -22,24 +26,38 @@
           const [input, setInput] = useState('');
           const [coins, setCoins] = useState(0);
           const [lives, setLives] = useState(3);
-          const [marioJump, setMarioJump] = useState(false);
+          const [marioAction, setMarioAction] = useState('idle');
+          const [marioPosition, setMarioPosition] = useState(50);
           const [showCoinEffect, setShowCoinEffect] = useState(false);
           const [soundEnabled, setSoundEnabled] = useState(true);
           const messagesEndRef = useRef(null);
           const [conversationCount, setConversationCount] = useState(0);
+          const [currentWorld, setCurrentWorld] = useState('overworld');
+          const [usedResponses, setUsedResponses] = useState(new Set());
+          const [isThinking, setIsThinking] = useState(false);
+          const conversationHistory = useRef([]);
 
-          const playerInfo = {
-            name: 'Jeremiah',
-            grade: '3rd',
-            favoriteColor: 'red',
-            sports: ['baseball', 'soccer', 'basketball'],
-            baseballPosition: ['pitch hitter', 'outfielder'],
-            hobbies: ['origami', 'legos', 'reading', 'drawing'],
-            favoriteGames: ['Super Mario Galaxy', 'Super Mario Party'],
-            favoriteFood: 'pizza',
-            siblings: ['brother', 'sister'],
-            favoriteSubject: 'art',
-            favoriteCharacter: 'Yoshi'
+          const worlds = {
+            overworld: {
+              sky: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 75%, #7c3f00 75%, #7c3f00 100%)',
+              name: 'WORLD 1-1'
+            },
+            underground: {
+              sky: 'linear-gradient(to bottom, #000000 0%, #1a1a1a 100%)',
+              name: 'UNDERGROUND'
+            },
+            castle: {
+              sky: 'linear-gradient(to bottom, #2a2a2a 0%, #4a4a4a 50%, #1a1a1a 100%)',
+              name: 'CASTLE'
+            },
+            underwater: {
+              sky: 'linear-gradient(to bottom, #0066cc 0%, #004488 100%)',
+              name: 'WATER WORLD'
+            },
+            sky: {
+              sky: 'linear-gradient(to bottom, #87ceeb 0%, #e0f6ff 100%)',
+              name: 'SKY WORLD'
+            }
           };
 
           const scrollToBottom = () => {
@@ -49,6 +67,16 @@
           useEffect(() => {
             scrollToBottom();
           }, [messages]);
+
+          useEffect(() => {
+            const worldKeys = Object.keys(worlds);
+            const interval = setInterval(() => {
+              const randomWorld = worldKeys[Math.floor(Math.random() * worldKeys.length)];
+              setCurrentWorld(randomWorld);
+            }, 30000);
+
+            return () => clearInterval(interval);
+          }, []);
 
           const playSound = (type) => {
             if (!soundEnabled) return;
@@ -86,142 +114,156 @@
             }
           };
 
-          const getMarioResponse = (userMessage) => {
+          const animateMario = (action) => {
+            if (action === 'run') {
+              setMarioAction('run');
+              const targetPosition = Math.random() * 80 + 10;
+              setMarioPosition(targetPosition);
+              setTimeout(() => setMarioAction('idle'), 2000);
+            } else if (action === 'jump') {
+              setMarioAction('jump');
+              playSound('jump');
+              setTimeout(() => setMarioAction('idle'), 600);
+            } else if (action === 'celebrate') {
+              setMarioAction('jump');
+              playSound('powerup');
+              setTimeout(() => {
+                setMarioAction('jump');
+                setTimeout(() => setMarioAction('idle'), 600);
+              }, 300);
+            }
+          };
+
+          const getAIResponse = async (userMessage) => {
+            try {
+              const systemPrompt = `You are Mario from Super Mario Bros, talking to a 9-year-old boy named Jeremiah who is in 3rd grade. 
+
+JEREMIAH'S INTERESTS (use these naturally in conversation):
+- Loves: drawing/art (his favorite subject), origami, Legos, reading
+- Sports: baseball (pitch hitter & outfielder), soccer, basketball
+- Favorite games: Super Mario Galaxy, Super Mario Party
+- Favorite food: pizza
+- Favorite color: red
+- Favorite character: Yoshi
+- Has a brother and sister
+
+YOUR PERSONALITY:
+- Use Mario's signature phrases: "Wahoo!", "Let's-a go!", "Mamma mia!", "Yahoo!", "Okie dokie!"
+- Be enthusiastic, positive, and encouraging
+- Keep responses to 2-3 sentences max
+- Always end with a question to keep conversation going
+- Talk about your adventures in the Mushroom Kingdom
+- Reference Princess Peach, Bowser, Luigi, Yoshi naturally
+- Compare things to your video game world
+- Be playful and fun - you're talking to a 9-year-old!
+
+IMPORTANT:
+- Ask about his interests naturally (art, sports, games, etc.)
+- Follow his lead - if he talks about baseball, ask more about baseball
+- Be conversational, not interview-y
+- Remember context from earlier in the conversation
+- Celebrate his achievements and encourage him`;
+
+              conversationHistory.current.push({
+                role: 'user',
+                content: userMessage
+              });
+
+              const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...conversationHistory.current.slice(-10) // Keep last 10 messages for context
+                  ],
+                  temperature: 0.9,
+                  max_tokens: 150
+                })
+              });
+
+              if (!response.ok) {
+                throw new Error('API request failed');
+              }
+
+              const data = await response.json();
+              const aiResponse = data.choices[0].message.content;
+
+              conversationHistory.current.push({
+                role: 'assistant',
+                content: aiResponse
+              });
+
+              // Animate Mario based on response content
+              const lowerResponse = aiResponse.toLowerCase();
+              if (lowerResponse.includes('run') || lowerResponse.includes('sport')) {
+                animateMario('run');
+              } else if (lowerResponse.includes('jump') || lowerResponse.includes('wahoo')) {
+                animateMario('jump');
+              } else if (lowerResponse.includes('awesome') || lowerResponse.includes('great')) {
+                animateMario('celebrate');
+              }
+
+              return aiResponse;
+            } catch (error) {
+              console.error('AI Error:', error);
+              return getFallbackResponse(userMessage);
+            }
+          };
+
+          const getUniqueResponse = (responses) => {
+            const availableResponses = responses.filter(r => !usedResponses.has(r));
+            
+            if (availableResponses.length === 0) {
+              setUsedResponses(new Set());
+              return responses[Math.floor(Math.random() * responses.length)];
+            }
+            
+            const selected = availableResponses[Math.floor(Math.random() * availableResponses.length)];
+            setUsedResponses(prev => new Set([...prev, selected]));
+            return selected;
+          };
+
+          const getFallbackResponse = (userMessage) => {
             const lowerMessage = userMessage.toLowerCase();
             
-            if (lowerMessage.includes('baseball') || lowerMessage.includes('practice') || lowerMessage.includes('game')) {
+            if (lowerMessage.includes('baseball') || lowerMessage.includes('practice')) {
+              animateMario('run');
               const responses = [
                 `Wahoo! Baseball! I love watching you play, Jeremiah! Did you do any pitching today? Or catch some fly balls in the outfield?`,
-                `That's-a awesome! Baseball is like my adventures - you gotta be quick and ready! How's your hitting going? Hitting home runs like collecting coins!`,
+                `That's-a awesome! Baseball is like my adventures - you gotta be quick and ready! How's your hitting going?`,
                 `Mamma mia! I bet you're getting really good at baseball! Do you like pitching better or playing outfield better?`,
               ];
-              return responses[Math.floor(Math.random() * responses.length)];
+              return getUniqueResponse(responses);
             }
 
-            if (lowerMessage.includes('soccer') || lowerMessage.includes('basketball')) {
-              const responses = [
-                `Yahoo! Sports are the best! Just like how I jump and run through levels! Did you score any goals or make any baskets?`,
-                `That's-a fantastic! Soccer and basketball are super fun! Which one do you like playing more, Jeremiah?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('draw') || lowerMessage.includes('art') || lowerMessage.includes('picture')) {
+            if (lowerMessage.includes('draw') || lowerMessage.includes('art')) {
+              animateMario('celebrate');
               const responses = [
                 `Ooh! I love your drawings, Jeremiah! What did you draw today? Maybe you can draw me and Yoshi sometime!`,
                 `Art class! That's your favorite subject, right? You're so good at drawing! What are you working on?`,
-                `Mamma mia! You're such a talented artist! Are you drawing anything cool? Maybe a Super Mario adventure scene?`,
+                `Mamma mia! You're such a talented artist! Are you drawing anything cool?`,
               ];
-              return responses[Math.floor(Math.random() * responses.length)];
+              return getUniqueResponse(responses);
             }
 
-            if (lowerMessage.includes('origami') || lowerMessage.includes('paper') || lowerMessage.includes('fold')) {
-              const responses = [
-                `Wahoo! Origami is so cool! What did you make? Can you make a Yoshi or a star? That would be amazing!`,
-                `That's-a so neat! Folding paper is like solving puzzles in my world! What's your favorite thing to make with origami?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('lego') || lowerMessage.includes('build') || lowerMessage.includes('built')) {
-              const responses = [
-                `Let's-a go! Building with Legos is like constructing levels in my world! What did you build, Jeremiah?`,
-                `Mamma mia! I bet you make awesome Lego creations! Are you building anything special right now?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('read') || lowerMessage.includes('book') || lowerMessage.includes('story')) {
-              const responses = [
-                `Okie dokie! Reading is like going on adventures without leaving home! What book are you reading, Jeremiah?`,
-                `That's-a wonderful! Books are full of adventures, just like the Mushroom Kingdom! What's your book about?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('galaxy') || lowerMessage.includes('party')) {
-              const responses = [
-                `Wahoo! Super Mario Galaxy is one of my best adventures! Do you like flying through space with me? Which galaxy is your favorite?`,
-                `Yahoo! Super Mario Party is so much fun! Do you play with your brother and sister? Who usually wins the mini-games?`,
-                `Let's-a go! I love that you play my games, Jeremiah! Are you playing Galaxy or Party today? Both are super fun!`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('yoshi')) {
-              const responses = [
-                `Yoshi! He's-a the best! I love riding on Yoshi's back - he's such a good friend! Do you like the green Yoshi or other colors?`,
-                `Mamma mia! Yoshi is your favorite character! He's my best buddy too! He can eat almost anything and flutter jump! So cool!`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('pizza') || lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
-              const responses = [
-                `Mmm! Pizza! That's your favorite, right? I love pizza too, Jeremiah! What kind of pizza do you like? Pepperoni? Cheese?`,
-                `Yahoo! Did you have pizza today? Pizza gives you energy just like my Super Mushrooms give me power!`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('school') || lowerMessage.includes('class') || lowerMessage.includes('3rd grade')) {
-              const responses = [
-                `How's 3rd grade going, Jeremiah? Did you have art class today? I know that's your favorite!`,
-                `Mamma mia! School is like collecting knowledge coins! What's the coolest thing you learned today in 3rd grade?`,
-                `That's-a great! 3rd grade is fun! Did you do anything cool in art class or your other subjects today?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('brother') || lowerMessage.includes('sister') || lowerMessage.includes('sibling')) {
-              const responses = [
-                `Ooh! Your brother and sister! What did you do with them today? Did you play games together?`,
-                `That's-a nice! Having a brother and sister is like having teammates! I have Luigi - he's my brother. What do you like doing with your brother and sister?`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('red') || lowerMessage.includes('color')) {
-              const responses = [
-                `Red! That's-a my favorite color too, Jeremiah! My hat and shirt are red! We have great taste!`,
-                `Wahoo! Red is the best color! It's the color of fire flowers and my awesome outfit!`,
-              ];
-              return responses[Math.floor(Math.random() * responses.length)];
-            }
-
-            if (lowerMessage.includes('peach') || lowerMessage.includes('princess')) {
-              return `Princess Peach is always getting captured by Bowser! But I never give up - I always save her! Are you brave like me, Jeremiah?`;
-            }
-            
-            if (lowerMessage.includes('bowser')) {
-              return `Bowser is tough, but I'm-a tougher! With courage and my friends like Yoshi, we can beat any challenge! What challenges did you overcome today?`;
-            }
-            
-            if (lowerMessage.includes('luigi')) {
-              return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave - kind of like having a brother, right?`;
-            }
-
-            if (lowerMessage.includes('how are you') || lowerMessage.includes('how are ya')) {
-              return `I'm-a doing great, Jeremiah! Just finished jumping through some pipes and collecting coins! How are YOU doing today?`;
-            }
-
+            // More fallback responses...
             const personalQuestions = [
-              `Tell me more, Jeremiah! What else happened today?`,
-              `That's-a interesting! Did you do any drawing or origami today?`,
-              `Wahoo! Did you play any baseball, soccer, or basketball this week?`,
-              `Okie dokie! What did you do with your brother and sister recently?`,
-              `Yahoo! Are you reading any good books right now?`,
-              `Let's-a go! Did you build anything cool with Legos lately?`,
-              `Mamma mia! That sounds neat! What's making you happy today, Jeremiah?`,
-              `That's-a cool! Did you have art class today? I know you love art!`,
-              `Nice! Have you been playing any Super Mario games? Galaxy or Party?`,
-              `Awesome! Did you have any pizza this week? That's your favorite!`,
+              `Tell me more, Jeremiah! That sounds interesting! What else is going on?`,
+              `Wahoo! What's the best thing that happened to you this week?`,
+              `Yahoo! What are you excited about right now?`,
+              `Let's-a go! Tell me something that made you smile today!`,
+              `Mamma mia! That's neat! What do you want to do this weekend?`,
             ];
             
-            return personalQuestions[Math.floor(Math.random() * personalQuestions.length)];
+            return getUniqueResponse(personalQuestions);
           };
 
-          const handleSend = () => {
+          const handleSend = async () => {
             if (!input.trim()) return;
 
             const userMessage = { type: 'user', text: input };
@@ -233,34 +275,50 @@
             playSound('coin');
             setTimeout(() => setShowCoinEffect(false), 1000);
             
-            setMarioJump(true);
-            playSound('jump');
-            setTimeout(() => setMarioJump(false), 400);
-            
             if (conversationCount > 0 && conversationCount % 5 === 0) {
               playSound('powerup');
+              setLives(prev => Math.min(prev + 1, 5));
             }
             
+            const currentInput = input;
             setInput('');
+            setIsThinking(true);
             
-            setTimeout(() => {
-              const response = getMarioResponse(input);
+            try {
+              let response;
+              if (USE_AI) {
+                response = await getAIResponse(currentInput);
+              } else {
+                // Fallback to pre-programmed responses
+                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
+                response = getFallbackResponse(currentInput);
+              }
+              
               setMessages(prev => [...prev, { type: 'mario', text: response }]);
-            }, 800 + Math.random() * 800);
+            } catch (error) {
+              console.error('Error:', error);
+              setMessages(prev => [...prev, { 
+                type: 'mario', 
+                text: "Mamma mia! I got a bit confused there. Can you say that again, Jeremiah?" 
+              }]);
+            } finally {
+              setIsThinking(false);
+            }
           };
 
           const handleKeyPress = (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !isThinking) {
               handleSend();
             }
           };
 
           return (
             <div className="min-h-screen bg-blue-500 flex items-center justify-center p-4 relative overflow-hidden" style={{
-              background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 75%, #7c3f00 75%, #7c3f00 100%)'
+              background: worlds[currentWorld].sky,
+              transition: 'background 2s ease'
             }}>
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(6)].map((_, i) => (
+                {currentWorld === 'overworld' && [...Array(6)].map((_, i) => (
                   <div
                     key={i}
                     className="absolute bg-white"
@@ -274,6 +332,32 @@
                     }}
                   />
                 ))}
+                {currentWorld === 'underwater' && [...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute text-4xl animate-bounce"
+                    style={{
+                      top: `${Math.random() * 80}%`,
+                      left: `${Math.random() * 90}%`,
+                      animationDelay: `${i * 0.5}s`,
+                      animationDuration: '3s'
+                    }}
+                  >
+                    🐟
+                  </div>
+                ))}
+                {currentWorld === 'sky' && [...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute text-6xl"
+                    style={{
+                      top: `${20 + i * 100}px`,
+                      right: `${50 + i * 100}px`,
+                    }}
+                  >
+                    ☁️
+                  </div>
+                ))}
               </div>
 
               {showCoinEffect && (
@@ -283,6 +367,12 @@
                   }}>
                     +1
                   </div>
+                </div>
+              )}
+
+              {!USE_AI && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black px-4 py-2 rounded font-bold text-sm z-50">
+                  ⚠️ Running in demo mode - Add API key for unlimited conversations!
                 </div>
               )}
 
@@ -304,7 +394,7 @@
                     </div>
                     <div className="text-3xl font-bold" style={{
                       textShadow: '2px 2px 0px #000'
-                    }}>WORLD 1-1</div>
+                    }}>{worlds[currentWorld].name}</div>
                     <button
                       onClick={() => setSoundEnabled(!soundEnabled)}
                       className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold text-xl"
@@ -316,7 +406,8 @@
 
                 <div className="flex h-[600px]">
                   <div className="w-2/5 relative overflow-hidden" style={{
-                    background: 'linear-gradient(to bottom, #5c94fc 0%, #5c94fc 70%, #7c3f00 70%, #7c3f00 100%)'
+                    background: worlds[currentWorld].sky,
+                    transition: 'background 2s ease'
                   }}>
                     <div className="absolute bottom-0 left-0 right-0 h-16 flex">
                       {[...Array(8)].map((_, i) => (
@@ -324,8 +415,8 @@
                           key={i}
                           className="w-16 h-16 border-2 border-black"
                           style={{
-                            background: '#d2691e',
-                            boxShadow: 'inset 2px 2px 0px #cd853f, inset -2px -2px 0px #8b4513'
+                            background: currentWorld === 'underground' ? '#333' : currentWorld === 'castle' ? '#555' : '#d2691e',
+                            boxShadow: 'inset 2px 2px 0px rgba(255,255,255,0.3), inset -2px -2px 0px rgba(0,0,0,0.5)'
                           }}
                         />
                       ))}
@@ -344,14 +435,23 @@
                     </div>
 
                     <div className="absolute bottom-16 left-32">
-                      <div className="w-16 h-24 border-4 border-black" style={{ background: '#2e8b57' }}>
+                      <div className="w-16 h-24 border-4 border-black" style={{ 
+                        background: currentWorld === 'underwater' ? '#0088cc' : '#2e8b57'
+                      }}>
                         <div className="w-full h-4 bg-gray-800 border-b-2 border-black"></div>
                       </div>
                     </div>
 
-                    <div className={`absolute transition-all duration-300 ${
-                      marioJump ? 'bottom-32' : 'bottom-16'
-                    } left-1/2 transform -translate-x-1/2`}>
+                    <div 
+                      className={`absolute transition-all ${
+                        marioAction === 'jump' ? 'bottom-32' : 'bottom-16'
+                      }`}
+                      style={{
+                        left: `${marioPosition}%`,
+                        transitionDuration: marioAction === 'run' ? '2s' : '0.3s',
+                        transitionProperty: 'left, bottom'
+                      }}
+                    >
                       <svg width="48" height="64" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
                         <rect x="5" y="0" width="6" height="2" fill="#ff0000"/>
                         <rect x="4" y="2" width="8" height="2" fill="#ff0000"/>
@@ -402,6 +502,15 @@
                           </div>
                         </div>
                       ))}
+                      {isThinking && (
+                        <div className="flex justify-start">
+                          <div className="bg-red-600 text-white border-2 border-red-800 px-4 py-3 font-mono text-sm"
+                            style={{ clipPath: 'polygon(0% 0%, 95% 0%, 100% 5%, 100% 100%, 5% 100%, 0% 95%)' }}>
+                            <div className="font-bold mb-1 text-yellow-300">★ MARIO:</div>
+                            <p className="animate-pulse">...</p>
+                          </div>
+                        </div>
+                      )}
                       <div ref={messagesEndRef} />
                     </div>
 
@@ -412,15 +521,17 @@
                           value={input}
                           onChange={(e) => setInput(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder="TYPE YOUR MESSAGE..."
-                          className="flex-1 px-4 py-3 bg-gray-800 text-white font-mono border-2 border-gray-600 focus:outline-none focus:border-yellow-400"
+                          disabled={isThinking}
+                          placeholder={isThinking ? "MARIO IS THINKING..." : "TYPE YOUR MESSAGE..."}
+                          className="flex-1 px-4 py-3 bg-gray-800 text-white font-mono border-2 border-gray-600 focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                           style={{
                             clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)'
                           }}
                         />
                         <button
                           onClick={handleSend}
-                          className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 font-bold font-mono border-2 border-green-800 transition-all transform hover:scale-105"
+                          disabled={isThinking}
+                          className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 font-bold font-mono border-2 border-green-800 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{
                             clipPath: 'polygon(0% 0%, 98% 0%, 100% 2%, 100% 100%, 2% 100%, 0% 98%)',
                             textShadow: '2px 2px 0px #000'
