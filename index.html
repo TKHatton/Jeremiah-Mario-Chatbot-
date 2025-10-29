@@ -3,7 +3,7 @@ import { Coins } from 'lucide-react';
 
 const MarioChatGame = () => {
   const [messages, setMessages] = useState([
-    { type: 'mario', text: "Wahoo! It's-a me, Mario! What's your name, friend?" }
+    { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
   ]);
   const [input, setInput] = useState('');
   const [coins, setCoins] = useState(0);
@@ -12,7 +12,22 @@ const MarioChatGame = () => {
   const [showCoinEffect, setShowCoinEffect] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const messagesEndRef = useRef(null);
-  const [userName, setUserName] = useState('');
+  const [conversationCount, setConversationCount] = useState(0);
+
+  // Jeremiah's personal info
+  const playerInfo = {
+    name: 'Jeremiah',
+    grade: '3rd',
+    favoriteColor: 'red',
+    sports: ['baseball', 'soccer', 'basketball'],
+    baseballPosition: ['pitch hitter', 'outfielder'],
+    hobbies: ['origami', 'legos', 'reading', 'drawing'],
+    favoriteGames: ['Super Mario Galaxy', 'Super Mario Party'],
+    favoriteFood: 'pizza',
+    siblings: ['brother', 'sister'],
+    favoriteSubject: 'art',
+    favoriteCharacter: 'Yoshi'
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -60,88 +75,151 @@ const MarioChatGame = () => {
 
   const getMarioResponse = (userMessage) => {
     const lowerMessage = userMessage.toLowerCase();
-    const name = userName || 'friend';
     
-    if (!userName) {
-      const extractedName = userMessage.trim().split(' ')[0];
-      setUserName(extractedName);
-      return `Fantastico! Nice to meet you, ${extractedName}! I'm on an adventure through the Mushroom Kingdom. What did you do today? Tell me about your day!`;
+    // Baseball responses
+    if (lowerMessage.includes('baseball') || lowerMessage.includes('practice') || lowerMessage.includes('game')) {
+      const responses = [
+        `Wahoo! Baseball! I love watching you play, Jeremiah! Did you do any pitching today? Or catch some fly balls in the outfield?`,
+        `That's-a awesome! Baseball is like my adventures - you gotta be quick and ready! How's your hitting going? Hitting home runs like collecting coins!`,
+        `Mamma mia! I bet you're getting really good at baseball! Do you like pitching better or playing outfield better?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('school') || lowerMessage.includes('class')) {
-      return `Mamma mia! School is like collecting knowledge coins, ${name}! Did you learn anything super cool today? Maybe something about-a science or math?`;
+
+    // Soccer/Basketball
+    if (lowerMessage.includes('soccer') || lowerMessage.includes('basketball')) {
+      const responses = [
+        `Yahoo! Sports are the best! Just like how I jump and run through levels! Did you score any goals or make any baskets?`,
+        `That's-a fantastic! Soccer and basketball are super fun! Which one do you like playing more, Jeremiah?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('video')) {
-      return `Wahoo! I love-a games too! What game did you play? Was it as fun as jumping on Goombas? Hehe!`;
+
+    // Drawing/Art
+    if (lowerMessage.includes('draw') || lowerMessage.includes('art') || lowerMessage.includes('picture')) {
+      const responses = [
+        `Ooh! I love your drawings, Jeremiah! What did you draw today? Maybe you can draw me and Yoshi sometime!`,
+        `Art class! That's your favorite subject, right? You're so good at drawing! What are you working on?`,
+        `Mamma mia! You're such a talented artist! Are you drawing anything cool? Maybe a Super Mario adventure scene?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('friend') || lowerMessage.includes('buddy')) {
-      return `That's-a wonderful! Friends are like power-ups - they make everything more fun! What do you and your friends like to do together?`;
+
+    // Origami
+    if (lowerMessage.includes('origami') || lowerMessage.includes('paper') || lowerMessage.includes('fold')) {
+      const responses = [
+        `Wahoo! Origami is so cool! What did you make? Can you make a Yoshi or a star? That would be amazing!`,
+        `That's-a so neat! Folding paper is like solving puzzles in my world! What's your favorite thing to make with origami?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
-      return `Mmm! I love-a mushrooms and spaghetti! What's your favorite food, ${name}? Does it give you super jumping power like my mushrooms?`;
+
+    // Legos
+    if (lowerMessage.includes('lego') || lowerMessage.includes('build') || lowerMessage.includes('built')) {
+      const responses = [
+        `Let's-a go! Building with Legos is like constructing levels in my world! What did you build, Jeremiah?`,
+        `Mamma mia! I bet you make awesome Lego creations! Are you building anything special right now?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('homework') || lowerMessage.includes('work')) {
-      return `Okie dokie! Homework is like solving puzzle blocks in my world. You're doing great! What subject are you working on?`;
+
+    // Reading
+    if (lowerMessage.includes('read') || lowerMessage.includes('book') || lowerMessage.includes('story')) {
+      const responses = [
+        `Okie dokie! Reading is like going on adventures without leaving home! What book are you reading, Jeremiah?`,
+        `That's-a wonderful! Books are full of adventures, just like the Mushroom Kingdom! What's your book about?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('tired') || lowerMessage.includes('sleepy')) {
-      return `Even heroes need rest, ${name}! I take breaks between my adventures. Did you have a busy day today?`;
+
+    // Video games
+    if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('galaxy') || lowerMessage.includes('party')) {
+      const responses = [
+        `Wahoo! Super Mario Galaxy is one of my best adventures! Do you like flying through space with me? Which galaxy is your favorite?`,
+        `Yahoo! Super Mario Party is so much fun! Do you play with your brother and sister? Who usually wins the mini-games?`,
+        `Let's-a go! I love that you play my games, Jeremiah! Are you playing Galaxy or Party today? Both are super fun!`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
-    if (lowerMessage.includes('fun') || lowerMessage.includes('cool') || lowerMessage.includes('awesome')) {
-      return `Yahoo! That sounds super fun! You know what else is fun? Collecting coins and saving Princess Peach! What's the most fun thing you did this week?`;
+
+    // Yoshi
+    if (lowerMessage.includes('yoshi')) {
+      const responses = [
+        `Yoshi! He's-a the best! I love riding on Yoshi's back - he's such a good friend! Do you like the green Yoshi or other colors?`,
+        `Mamma mia! Yoshi is your favorite character! He's my best buddy too! He can eat almost anything and flutter jump! So cool!`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
     }
-    
+
+    // Pizza
+    if (lowerMessage.includes('pizza') || lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('lunch') || lowerMessage.includes('dinner')) {
+      const responses = [
+        `Mmm! Pizza! That's your favorite, right? I love pizza too, Jeremiah! What kind of pizza do you like? Pepperoni? Cheese?`,
+        `Yahoo! Did you have pizza today? Pizza gives you energy just like my Super Mushrooms give me power!`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // School
+    if (lowerMessage.includes('school') || lowerMessage.includes('class') || lowerMessage.includes('3rd grade')) {
+      const responses = [
+        `How's 3rd grade going, Jeremiah? Did you have art class today? I know that's your favorite!`,
+        `Mamma mia! School is like collecting knowledge coins! What's the coolest thing you learned today in 3rd grade?`,
+        `That's-a great! 3rd grade is fun! Did you do anything cool in art class or your other subjects today?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Siblings
+    if (lowerMessage.includes('brother') || lowerMessage.includes('sister') || lowerMessage.includes('sibling')) {
+      const responses = [
+        `Ooh! Your brother and sister! What did you do with them today? Did you play games together?`,
+        `That's-a nice! Having a brother and sister is like having teammates! I have Luigi - he's my brother. What do you like doing with your brother and sister?`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Red color
+    if (lowerMessage.includes('red') || lowerMessage.includes('color')) {
+      const responses = [
+        `Red! That's-a my favorite color too, Jeremiah! My hat and shirt are red! We have great taste!`,
+        `Wahoo! Red is the best color! It's the color of fire flowers and my awesome outfit!`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Generic Mario responses
     if (lowerMessage.includes('peach') || lowerMessage.includes('princess')) {
-      return `Princess Peach is-a always getting captured by Bowser! But I never give up - I always save her! Do you ever help people like I help the Princess?`;
+      return `Princess Peach is always getting captured by Bowser! But I never give up - I always save her! Are you brave like me, Jeremiah?`;
     }
     
-    if (lowerMessage.includes('bowser') || lowerMessage.includes('bad') || lowerMessage.includes('villain')) {
-      return `Bowser is tough, but I'm-a tougher! With courage and my friends Luigi and Yoshi, we can beat any challenge! What challenges did you overcome today, ${name}?`;
+    if (lowerMessage.includes('bowser')) {
+      return `Bowser is tough, but I'm-a tougher! With courage and my friends like Yoshi, we can beat any challenge! What challenges did you overcome today?`;
     }
     
-    if (lowerMessage.includes('luigi') || lowerMessage.includes('brother')) {
-      return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave. Do you have brothers or sisters, ${name}?`;
-    }
-    
-    if (lowerMessage.includes('jump') || lowerMessage.includes('run')) {
-      return `Wahoo! Jumping is what I do best! *does a triple jump* Can you jump high too? What sports or activities do you like?`;
+    if (lowerMessage.includes('luigi')) {
+      return `Luigi is my little brother and best friend! He's-a sometimes scared but very brave - kind of like having a brother, right?`;
     }
 
-    if (lowerMessage.includes('birthday') || lowerMessage.includes('party')) {
-      return `It's-a party time! Yahoo! Birthdays are the best - like collecting a Super Star! I hope you have lots of cake and fun! What's your favorite part of birthdays?`;
-    }
-
-    if (lowerMessage.includes('help') || lowerMessage.includes('stuck')) {
-      return `Don't worry, ${name}! Even when I'm stuck in a tough level, I keep trying! What do you need help with? Remember - you're braver than you think!`;
-    }
-    
     if (lowerMessage.includes('how are you') || lowerMessage.includes('how are ya')) {
-      return `I'm-a doing great! Just finished jumping through some pipes and collecting coins! How are YOU doing today, ${name}?`;
+      return `I'm-a doing great, Jeremiah! Just finished jumping through some pipes and collecting coins! How are YOU doing today?`;
     }
-    
-    if (lowerMessage.includes('where') && lowerMessage.includes('you')) {
-      return `Right now I'm in the Mushroom Kingdom! There are pipes everywhere and lots of coins to collect. Where are you right now?`;
-    }
-    
-    if (lowerMessage.includes('favorite') && lowerMessage.includes('color')) {
-      return `I love-a RED! It's the color of my hat and overalls! What's your favorite color, ${name}?`;
-    }
-    
-    const defaultResponses = [
-      `That's-a interesting, ${name}! Tell me more! What else happened today?`,
-      `Mamma mia! You're doing great at typing! What's the coolest thing you saw today?`,
-      `Wahoo! I love hearing about your adventures, ${name}! What made you smile today?`,
-      `Let's-a go! Keep telling me about your day! Did anything surprise you?`,
-      `Yahoo! That sounds neat! What's something you're looking forward to, ${name}?`,
-      `Okie dokie! You know what? You remind me of a brave adventurer! What's your favorite thing to do?`,
+
+    // Engaging follow-up questions based on his interests
+    const personalQuestions = [
+      `Tell me more, Jeremiah! What else happened today?`,
+      `That's-a interesting! Did you do any drawing or origami today?`,
+      `Wahoo! Did you play any baseball, soccer, or basketball this week?`,
+      `Okie dokie! What did you do with your brother and sister recently?`,
+      `Yahoo! Are you reading any good books right now?`,
+      `Let's-a go! Did you build anything cool with Legos lately?`,
+      `Mamma mia! That sounds neat! What's making you happy today, Jeremiah?`,
+      `That's-a cool! Did you have art class today? I know you love art!`,
+      `Nice! Have you been playing any Super Mario games? Galaxy or Party?`,
+      `Awesome! Did you have any pizza this week? That's your favorite!`,
     ];
     
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    return personalQuestions[Math.floor(Math.random() * personalQuestions.length)];
   };
 
   const handleSend = () => {
@@ -149,6 +227,7 @@ const MarioChatGame = () => {
 
     const userMessage = { type: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
+    setConversationCount(prev => prev + 1);
     
     setCoins(prev => prev + 1);
     setShowCoinEffect(true);
@@ -159,7 +238,7 @@ const MarioChatGame = () => {
     playSound('jump');
     setTimeout(() => setMarioJump(false), 400);
     
-    if (messages.length % 5 === 0) {
+    if (conversationCount > 0 && conversationCount % 5 === 0) {
       playSound('powerup');
     }
     
@@ -216,7 +295,7 @@ const MarioChatGame = () => {
           <div className="flex justify-between items-center font-mono text-white">
             <div className="flex items-center gap-8">
               <div>
-                <div className="text-sm">MARIO</div>
+                <div className="text-sm">JEREMIAH</div>
                 <div className="text-2xl font-bold flex items-center gap-2">
                   <span className="text-yellow-300">×{coins.toString().padStart(2, '0')}</span>
                 </div>
@@ -283,7 +362,6 @@ const MarioChatGame = () => {
               marioJump ? 'bottom-32' : 'bottom-16'
             } left-1/2 transform -translate-x-1/2`}>
               <svg width="48" height="64" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
-                {/* Mario's iconic sprite representation */}
                 {/* Hat */}
                 <rect x="5" y="0" width="6" height="2" fill="#ff0000"/>
                 <rect x="4" y="2" width="8" height="2" fill="#ff0000"/>
