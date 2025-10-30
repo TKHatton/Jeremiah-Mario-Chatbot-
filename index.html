@@ -15,8 +15,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // CONFIGURATION - Add your API key here OR use Netlify environment variable
-        
         const MarioChatGame = () => {
           const [messages, setMessages] = useState([
             { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
@@ -134,98 +132,33 @@
 
           const getAIResponse = async (userMessage) => {
             try {
-              const systemPrompt = `You are Mario from Super Mario Bros, talking to a 9-year-old boy named Jeremiah who is in 3rd grade. 
-
-JEREMIAH'S INTERESTS (use these naturally in conversation):
-- Loves: drawing/art (his favorite subject), origami, Legos, reading
-- Sports: baseball (pitch hitter & outfielder), soccer, basketball
-- Favorite games: Super Mario Galaxy, Super Mario Party
-- Favorite food: pizza
-- Favorite color: red
-- Favorite character: Yoshi
-- Has a brother and sister
-
-YOUR PERSONALITY:
-- Use Mario's signature phrases: "Wahoo!", "Let's-a go!", "Mamma mia!", "Yahoo!", "Okie dokie!"
-- Be enthusiastic, positive, and encouraging
-- Keep responses to 2-3 sentences max
-- Always end with a question to keep conversation going
-- Talk about your adventures in the Mushroom Kingdom
-- Reference Princess Peach, Bowser, Luigi, Yoshi naturally
-- Compare things to your video game world
-- Be playful and fun - you're talking to a 9-year-old!
-
-IMPORTANT:
-- Ask about his interests naturally (art, sports, games, etc.)
-- Follow his lead - if he talks about baseball, ask more about baseball
-- Be conversational, not interview-y
-- Remember context from earlier in the conversation
-- Celebrate his achievements and encourage him`;
-
               conversationHistory.current.push({
                 role: 'user',
                 content: userMessage
               });
 
-              const getAIResponse = async (userMessage) => {
-                try {
-                  conversationHistory.current.push({
-                    role: 'user',
-                    content: userMessage
-            });
+              const response = await fetch('/.netlify/functions/chat', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  messages: conversationHistory.current.slice(-10)
+                })
+              });
 
-            // Call our Netlify function - it handles everything
-            const response = await fetch('/.netlify/functions/chat', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-      body: JSON.stringify({
-        messages: conversationHistory.current.slice(-10)
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    const data = await response.json();
-    const aiResponse = data.message;  // Function returns { message: "..." }
-
-    conversationHistory.current.push({
-      role: 'assistant',
-      content: aiResponse
-    });
-
-    // Animate Mario based on response content
-    const lowerResponse = aiResponse.toLowerCase();
-    if (lowerResponse.includes('run') || lowerResponse.includes('sport')) {
-      animateMario('run');
-    } else if (lowerResponse.includes('jump') || lowerResponse.includes('wahoo')) {
-      animateMario('jump');
-    } else if (lowerResponse.includes('awesome') || lowerResponse.includes('great')) {
-      animateMario('celebrate');
-    }
-
-    return aiResponse;
-  } catch (error) {
-    console.error('AI Error:', error);
-    return getFallbackResponse(userMessage);
-  }
-};
               if (!response.ok) {
                 throw new Error('API request failed');
               }
 
               const data = await response.json();
-              const aiResponse = data.choices[0].message.content;
+              const aiResponse = data.message;
 
               conversationHistory.current.push({
                 role: 'assistant',
                 content: aiResponse
               });
 
-              // Animate Mario based on response content
               const lowerResponse = aiResponse.toLowerCase();
               if (lowerResponse.includes('run') || lowerResponse.includes('sport')) {
                 animateMario('run');
@@ -278,7 +211,6 @@ IMPORTANT:
               return getUniqueResponse(responses);
             }
 
-            // More fallback responses...
             const personalQuestions = [
               `Tell me more, Jeremiah! That sounds interesting! What else is going on?`,
               `Wahoo! What's the best thing that happened to you this week?`,
@@ -312,15 +244,7 @@ IMPORTANT:
             setIsThinking(true);
             
             try {
-              let response;
-              if (true) {  // Always try to use AI
-                response = await getAIResponse(currentInput);
-              } else {
-                // Fallback to pre-programmed responses
-                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
-                response = getFallbackResponse(currentInput);
-              }
-              
+              const response = await getAIResponse(currentInput);
               setMessages(prev => [...prev, { type: 'mario', text: response }]);
             } catch (error) {
               console.error('Error:', error);
@@ -394,12 +318,6 @@ IMPORTANT:
                   }}>
                     +1
                   </div>
-                </div>
-              )}
-
-              {!USE_AI && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black px-4 py-2 rounded font-bold text-sm z-50">
-                  ⚠️ Running in demo mode - Add API key for unlimited conversations!
                 </div>
               )}
 
