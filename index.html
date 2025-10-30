@@ -16,9 +16,7 @@
         const { useState, useEffect, useRef } = React;
 
         // CONFIGURATION - Add your API key here OR use Netlify environment variable
-        const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY_HERE'; // Replace with your actual key
-        const USE_AI = OPENAI_API_KEY && OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE';
-
+        
         const MarioChatGame = () => {
           const [messages, setMessages] = useState([
             { type: 'mario', text: "Wahoo! Jeremiah! It's-a me, Mario! How's my favorite 3rd grader doing today?" }
@@ -169,23 +167,52 @@ IMPORTANT:
                 content: userMessage
               });
 
-              const response = await fetch('/.netlify/functions/chat', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                  model: 'gpt-4o-mini',
-                  messages: [
-                    { role: 'system', content: systemPrompt },
-                    ...conversationHistory.current.slice(-10) // Keep last 10 messages for context
-                  ],
-                  temperature: 0.9,
-                  max_tokens: 150
-                })
-              });
+              const getAIResponse = async (userMessage) => {
+                try {
+                  conversationHistory.current.push({
+                    role: 'user',
+                    content: userMessage
+            });
 
+            // Call our Netlify function - it handles everything
+            const response = await fetch('/.netlify/functions/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+      body: JSON.stringify({
+        messages: conversationHistory.current.slice(-10)
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    const aiResponse = data.message;  // Function returns { message: "..." }
+
+    conversationHistory.current.push({
+      role: 'assistant',
+      content: aiResponse
+    });
+
+    // Animate Mario based on response content
+    const lowerResponse = aiResponse.toLowerCase();
+    if (lowerResponse.includes('run') || lowerResponse.includes('sport')) {
+      animateMario('run');
+    } else if (lowerResponse.includes('jump') || lowerResponse.includes('wahoo')) {
+      animateMario('jump');
+    } else if (lowerResponse.includes('awesome') || lowerResponse.includes('great')) {
+      animateMario('celebrate');
+    }
+
+    return aiResponse;
+  } catch (error) {
+    console.error('AI Error:', error);
+    return getFallbackResponse(userMessage);
+  }
+};
               if (!response.ok) {
                 throw new Error('API request failed');
               }
@@ -286,7 +313,7 @@ IMPORTANT:
             
             try {
               let response;
-              if (USE_AI) {
+              if (true) {  // Always try to use AI
                 response = await getAIResponse(currentInput);
               } else {
                 // Fallback to pre-programmed responses
