@@ -1,6 +1,23 @@
-exports.handler = async (event, context) => {
+const https = require('https');
+
+exports.handler = async (event) => {
+  // Handle CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
@@ -23,26 +40,59 @@ YOUR PERSONALITY:
 - Reference Princess Peach, Bowser, Luigi, Yoshi naturally
 - Be playful and fun for a 9-year-old!`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('API key not found');
+    }
+
+    const postData = JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+      temperature: 0.9,
+      max_tokens: 150
+    });
+
+    const options = {
+      hostname: 'api.openai.com',
+      path: '/v1/chat/completions',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
-        temperature: 0.9,
-        max_tokens: 150
-      })
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const aiResponse = await new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', () => resolve(JSON.parse(data)));
+      });
+      req.on('error', reject);
+      req.write(postData);
+      req.end();
     });
 
-    const data = await response.json();
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: data.choices[0].message.content })
+      headers,
+      body: JSON.stringify({ message: aiResponse.choices[0].message.content })
     };
+
   } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed' }) };
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Failed to get response', 
+        details: error.message 
+      })
+    };
   }
 };
